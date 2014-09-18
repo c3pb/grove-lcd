@@ -8,7 +8,6 @@ use_dummy = False
 try:
     from smbus import SMBus
 except ImportError:
-    print("Couldn't import smbus bindings, using dummy display")
     use_dummy = True
 
 if not use_dummy:
@@ -19,16 +18,17 @@ class Display(object):
     backlight = None
     screen    = None
 
-    def __init__(self, bus=None):
+    def __init__(self):
+        self.dummy = use_dummy
         if use_dummy:
             self.pos  = (0, 0)
             self.rows = [ " " * 16, " " * 16 ]
             sys.stdout.write(chr(0x1b) + "[2J")
             sys.stdout.flush()
         else:
-            assert bus is not None
-            self.backlight = backlight.Backlight(bus, 0x62)
-            self.screen    = screen.Screen(bus, 0x3e)
+            self.bus = SMBus(1)
+            self.backlight = backlight.Backlight(self.bus, 0x62)
+            self.screen    = screen.Screen(self.bus, 0x3e)
 
     def write(self, text):
         if use_dummy:
@@ -75,11 +75,7 @@ class Display(object):
             raise NotImplemented
 
 if __name__ == "__main__":
-    d = None
-    if use_dummy:
-        d = Display()
-    else:
-        d = Display(SMBus(1))
+    d = Display()
     d.move(0, 0)
     d.write("Yeah.      Nice.")
 
