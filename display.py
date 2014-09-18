@@ -1,8 +1,9 @@
 #!/usr/local/bin/python2.7
 
+import argparse
 import math
-import time
 import sys
+import time
 
 use_dummy = False
 try:
@@ -74,8 +75,7 @@ class Display(object):
         else:
             raise NotImplemented
 
-if __name__ == "__main__":
-    d = Display()
+def demo(d):
     d.move(0, 0)
     d.write("Yeah.      Nice.")
 
@@ -95,3 +95,45 @@ if __name__ == "__main__":
         else:
             cnt += 0.01
         time.sleep(0.01)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Driver for Grove-LCD display boards")
+
+    parser.add_argument("-demo", default=False, dest="demo", action="store_true", help="run demo")
+    parser.add_argument("text", metavar="TEXT", type=str, nargs="*", help="String to display")
+    parser.add_argument("-r", default=255, dest="red", metavar="RED", type=int, help="red component of backlight color [0-255]")
+    parser.add_argument("-g", default=255, dest="green", metavar="GREEN", type=int, help="green component of backlight color [0-255]")
+    parser.add_argument("-b", default=255, dest="blue", metavar="BLUE", type=int, help="blue component of backlight color [0-255]")
+
+    args = parser.parse_args()
+
+    if args.demo:
+        d = Display()
+        demo(d)
+        sys.exit(0)
+
+    failed = False
+
+    if args.red < 0 or args.red > 255:
+        failed = True
+    if args.green < 0 or args.green > 255:
+        failed = True
+    if args.blue < 0 or args.blue > 255:
+        failed = True
+
+    if len(args.text) == 0:
+        failed = True
+    if len(args.text) > 2:
+        failed = True
+
+    if failed:
+        parser.print_usage()
+        sys.exit(-1)
+
+    d = Display()
+    d.color(args.red, args.green, args.blue)
+    d.move(0, 0)
+    d.write(args.text[0])
+    if len(args.text) == 2:
+        d.move(0, 1)
+        d.write(args.text[1])
